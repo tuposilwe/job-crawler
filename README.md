@@ -1,99 +1,116 @@
-# 🇹🇿 Tanzania Tech Job Crawler
+# Tanzania Tech Job Crawler
 
-A Node.js web crawler that searches for **Software Engineer** and **Developer** jobs in Tanzania across multiple job boards.
+A Node.js web crawler that searches for software and developer jobs in Tanzania across multiple job boards, then emails you a formatted report twice daily.
 
-## 📡 Sources Crawled
+## Sources
 
-| Source            | URL                              | Focus                      |
-|-------------------|----------------------------------|----------------------------|
-| Fuzu              | fuzu.com/tanzania                | African job board          |
-| BrighterMonday    | brightermonday.co.tz             | East Africa jobs           |
-| LinkedIn          | linkedin.com/jobs                | Global, filtered Tanzania  |
-| Indeed Tanzania   | tz.indeed.com                    | Large aggregator           |
-| JobsInTanzania    | jobsintanzania.co.tz             | Local Tanzania board       |
+| Source       | URL                          |
+|--------------|------------------------------|
+| Fuzu         | fuzu.com/tanzania            |
+| LinkedIn     | linkedin.com/jobs            |
+| Mabumbe      | mabumbe.com                  |
+| AjiraYako    | ajirayako.co.tz              |
 
-## 🚀 Quick Start
+## Requirements
 
-### 1. Install dependencies
+- Node.js 18+
+- A Gmail account with 2FA enabled
+- A Gmail App Password (not your main password)
+
+## Installation
+
 ```bash
+git clone https://github.com/tuposilwe/job-crawler.git
+cd job-crawler
 npm install
 ```
 
-### 2. Run the crawler
+## Configuration
+
+Copy the example env file and fill in your credentials:
+
+```bash
+cp .env.example .env
+```
+
+```env
+MAIL_HOST=mail.example.com
+MAIL_PORT=465
+MAIL_USERNAME=noreply@example.com
+MAIL_PASSWORD=your-mail-password
+MAIL_FROM_ADDRESS=noreply@example.com
+EMAIL_TO=recipient@gmail.com
+```
+
+## Usage
+
+Run manually:
+
 ```bash
 node index.js
 ```
 
-### 3. View results
-Results are saved in the `results/` directory:
-- `results/jobs.json` — Full structured data
-- `results/jobs.csv`  — Spreadsheet-friendly format
+Results are saved to `results/jobs.json` and `results/jobs.csv`, and an email is sent to `EMAIL_TO`.
 
----
+## VPS Scheduled Runs (8 AM & 5 PM Tanzania Time)
 
-## 📁 Project Structure
+Open the cron editor on your VPS:
 
-```
-job-crawler/
-├── crawler.js      # Core crawling logic (all sources)
-├── index.js        # Entry point, output & summary
-├── results/        # Output directory (auto-created)
-│   ├── jobs.json
-│   └── jobs.csv
-└── README.md
+```bash
+crontab -e
 ```
 
----
+Add these two lines (UTC times — Tanzania is UTC+3):
 
-## ⚙️ How It Works
-
-1. **Fetch** — Uses `axios` to GET each job listing page with browser-like headers
-2. **Parse** — Uses `cheerio` (server-side jQuery) to extract job cards
-3. **Filter** — Keeps only tech-relevant listings (software, developer, engineer, etc.)
-4. **Deduplicate** — Removes duplicate listings across sources
-5. **Output** — Saves JSON + CSV and prints a console summary
-
----
-
-## 🔧 Configuration
-
-Edit the keyword arrays in `crawler.js` to customize:
-
-```js
-// In filterRelevant():
-const techKeywords = ["software", "developer", "engineer", "react", ...];
-
-// In each crawler function:
-const queries = ["software+engineer", "developer"];
+```
+0 5  * * * cd /path/to/job-crawler && node index.js >> /var/log/job-crawler.log 2>&1
+0 14 * * * cd /path/to/job-crawler && node index.js >> /var/log/job-crawler.log 2>&1
 ```
 
----
+Verify the schedule:
 
-## 📝 Output Format
+```bash
+crontab -l
+```
 
-Each job object looks like:
+View logs:
+
+```bash
+tail -f /var/log/job-crawler.log
+```
+
+## Output Format
+
+Each job entry:
+
 ```json
 {
-  "source": "BrighterMonday",
+  "source": "Mabumbe",
   "title": "Software Engineer",
   "company": "ACME Corp",
   "location": "Dar es Salaam, Tanzania",
-  "link": "https://www.brightermonday.co.tz/jobs/...",
-  "postedDate": "2024-01-15"
+  "link": "https://mabumbe.com/jobs/...",
+  "postedDate": "2026-05-20"
 }
 ```
 
----
+## Project Structure
 
-## ⚠️ Notes
+```
+job-crawler/
+├── crawler.js      # Scraping logic for all sources
+├── index.js        # Entry point — runs crawler, saves files, sends email
+├── mailer.js       # Nodemailer email module
+├── results/        # Output directory (auto-created)
+│   ├── jobs.json
+│   └── jobs.csv
+├── .env.example    # Environment variable template
+└── README.md
+```
 
-- Some sites (LinkedIn, Indeed) may return limited results or block scrapers intermittently. The crawler handles errors gracefully and continues.
-- Be respectful of rate limits — delays are built in between requests.
-- For heavy usage, consider adding proxies or using the official APIs where available.
+## Dependencies
 
----
-
-## 📦 Dependencies
-
-- [`axios`](https://axios-http.com/) — HTTP client
-- [`cheerio`](https://cheerio.js.org/) — HTML parsing
+- [axios](https://axios-http.com) — HTTP client
+- [cheerio](https://cheerio.js.org) — HTML parsing
+- [nodemailer](https://nodemailer.com) — Email sending
+- [dotenv](https://github.com/motdotla/dotenv) — Environment variables

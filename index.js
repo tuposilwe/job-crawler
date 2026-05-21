@@ -1,6 +1,8 @@
+require("dotenv").config();
 const fs = require("fs");
 const path = require("path");
 const { crawlAllSources } = require("./crawler");
+const { sendJobEmail } = require("./mailer");
 
 // ─── Output helpers ───────────────────────────────────────────────────────────
 
@@ -62,6 +64,7 @@ async function main() {
     printSummary(jobs);
     saveJSON(jobs);
     saveCSV(jobs);
+    await sendJobEmail(jobs);
     console.log("\n✨ Done! Check the results/ directory for output files.\n");
   } catch (err) {
     console.error("Fatal error:", err);
